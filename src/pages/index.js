@@ -1,3 +1,4 @@
+import { graphql } from 'gatsby';
 import React, {Component} from "react"
 import { Helmet } from "react-helmet"
 import mapboxgl from 'mapbox-gl'
@@ -22,12 +23,11 @@ class CurbMap extends Component {
   }
 
   componentDidMount() {
-
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
       style: 'mapbox://styles/saadiqm/cjxbd493m05cc1cl29jntlb1w',
-      center: [-114.0708, 51.0486],
-      zoom:15
+      center: [-118.3356366, 34.0495963],
+      zoom:10
     });
 
     let scaledWidth = (width) => {return {
@@ -41,11 +41,12 @@ class CurbMap extends Component {
 
     this.map.on('load', () => {
 
-      let geojson = 'https://pg7x2ae618.execute-api.us-west-2.amazonaws.com/dev/parking/rules?start='+this.state.TimeValue+'&day='+this.state.DayValue
+      // let geojson = 'https://pg7x2ae618.execute-api.us-west-2.amazonaws.com/dev/parking/rules?start='+this.state.TimeValue+'&day='+this.state.DayValue
+      // let geojson = `/la/index.json`;
 
       this.map.addSource('Curbs', {
         type: 'geojson',
-        data: geojson
+        data: this.props.data.dataJson
       });
 
       this.map.addLayer({
@@ -187,5 +188,16 @@ class CurbMap extends Component {
     );
   }
 }
+
+export const query = graphql`
+  query MyQuery {
+    dataJson(type: {}, id: {}) {
+      type
+      features {
+        type
+      }
+    }
+  }
+`
 
 export default CurbMap
