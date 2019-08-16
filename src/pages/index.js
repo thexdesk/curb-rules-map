@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet"
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-import RulesConatiner from "../components/RulesContainer"
+import RulesContainer from "../components/RulesContainer"
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZGlxbSIsImEiOiJjamJpMXcxa3AyMG9zMzNyNmdxNDlneGRvIn0.wjlI8r1S_-xxtq2d-W5qPA';
 
@@ -175,7 +175,7 @@ class CurbMap extends Component {
         </Helmet>
 
        <div ref={el => this.mapContainer = el} style={{position: 'absolute',top: 0, bottom: 0, width: '100%',height: '100%'}}/>
-       <RulesConatiner
+       <RulesContainer
          time={this.state.TimeValue}
          onTimeChange={this.handleTimeChange}
          day={this.state.DayValue}
