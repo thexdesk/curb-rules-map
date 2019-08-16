@@ -1,4 +1,9 @@
+import center from '@turf/center';
+import { featureCollection } from '@turf/helpers';
 import { graphql } from 'gatsby';
+// import {
+//   uniq,
+// } from 'lodash';
 import React, {Component} from "react"
 import { Helmet } from "react-helmet"
 import mapboxgl from 'mapbox-gl'
@@ -7,7 +12,30 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import RulesContainer from "../components/RulesContainer"
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZGlxbSIsImEiOiJjamJpMXcxa3AyMG9zMzNyNmdxNDlneGRvIn0.wjlI8r1S_-xxtq2d-W5qPA';
-
+const COLOR_MAP = {
+  'any': 'white',
+  'bike': 'green',
+  'car share': 'blue',
+  'carpool': 'yellow',
+  'commercial': 'orange',
+  'compact': 'brown',
+  'construction': 'green',
+  'electric': 'blue',
+  'emergency': 'yellow',
+  'food truck': 'orange',
+  'handicap': 'brown',
+  'micromobility': 'green',
+  'motorcycle': 'blue',
+  'passenger': 'yellow',
+  'permit': 'orange',
+  'police': 'blue',
+  'rideshare': 'brown',
+  'staff': 'green',
+  'student': 'blue',
+  'taxi': 'yellow',
+  'truck': 'brown',
+  'visitor': 'orange',
+}
 class CurbMap extends Component {
 
   constructor(props) {
@@ -23,11 +51,110 @@ class CurbMap extends Component {
   }
 
   componentDidMount() {
+    const fc = featureCollection(this.props.data.dataJson.features);
+    const centerPoint = center(fc).geometry.coordinates;
+
+    const parkingFc = featureCollection([]);
+    parkingFc.features = [];
+    this.props.data.dataJson.features.forEach((feature) => {
+      feature.properties.regulations.forEach((reg) => {
+        if (reg.rule && reg.rule.activity === "parking") {
+          // parking
+          if (reg.userClass && reg.userClass.classes) {
+            reg.userClass.classes.forEach((currClass) => {
+              const outputFeature = Object.assign({}, feature);
+              outputFeature.properties.parking = true;
+              outputFeature.properties.class = currClass;
+              outputFeature.properties.color = COLOR_MAP[currClass];
+              // console.log("parking=>class", currClass);
+              parkingFc.features.push(outputFeature);
+            });
+          } else {
+            const outputFeature = Object.assign({}, feature);
+            outputFeature.properties.parking = true;
+            outputFeature.properties.class = '';
+            outputFeature.properties.color = COLOR_MAP['any'];
+            // console.log("parking=>no class");
+            parkingFc.features.push(outputFeature);  
+          }
+        } else if (reg.rule && reg.rule.activity === "no parking") {
+          // no parking
+          if (reg.userClass && reg.userClass.classes) {
+            reg.userClass.classes.forEach((currClass) => {
+              const outputFeature = Object.assign({}, feature);
+              outputFeature.properties.parking = false;
+              outputFeature.properties.class = currClass;
+              outputFeature.properties.color = 'red';
+              // console.log("no parking=>class", currClass);
+              parkingFc.features.push(outputFeature);
+            });
+          } else {
+            const outputFeature = Object.assign({}, feature);
+            outputFeature.properties.parking = false;
+            outputFeature.properties.class = '';
+            outputFeature.properties.color = 'red';
+            // console.log("no parking=>no class");
+            parkingFc.features.push(outputFeature);  
+          }
+        }
+      });
+    });
+    console.log("parkingFc", parkingFc);
+
+
+    const loadingFc = featureCollection([]);
+    loadingFc.features = [];
+    this.props.data.dataJson.features.forEach((feature) => {
+      feature.properties.regulations.forEach((reg) => {
+        if (reg.rule && reg.rule.activity === "loading" || reg.rule && reg.rule.activity === "standing") {
+          // loading
+          if (reg.userClass && reg.userClass.classes) {
+            reg.userClass.classes.forEach((currClass) => {
+              const outputFeature = Object.assign({}, feature);
+              outputFeature.properties.loading = true;
+              outputFeature.properties.class = currClass;
+              outputFeature.properties.color = COLOR_MAP[currClass];
+              // console.log("loading=>class", currClass);
+              loadingFc.features.push(outputFeature);
+            });
+          } else {
+            const outputFeature = Object.assign({}, feature);
+            outputFeature.properties.loading = true;
+            outputFeature.properties.class = '';
+            outputFeature.properties.color = COLOR_MAP['any'];
+            // console.log("loading=>no class");
+            loadingFc.features.push(outputFeature);  
+          }
+        } else if (reg.rule && reg.rule.activity === "no loading" || reg.rule && reg.rule.activity === "no standing") {
+          // no loading
+          if (reg.userClass && reg.userClass.classes) {
+            reg.userClass.classes.forEach((currClass) => {
+              const outputFeature = Object.assign({}, feature);
+              outputFeature.properties.loading = false;
+              outputFeature.properties.class = currClass;
+              outputFeature.properties.color = 'red';
+              // console.log("no loading=>class", currClass);
+              loadingFc.features.push(outputFeature);
+            });
+          } else {
+            const outputFeature = Object.assign({}, feature);
+            outputFeature.properties.loading = false;
+            outputFeature.properties.class = '';
+            outputFeature.properties.color = 'red';
+            // console.log("no loading=>no class");
+            loadingFc.features.push(outputFeature);  
+          }
+        }
+      });
+    });
+    console.log("loadingFc", loadingFc);
+    
     this.map = new mapboxgl.Map({
       container: this.mapContainer,
       style: 'mapbox://styles/saadiqm/cjxbd493m05cc1cl29jntlb1w',
-      center: [-118.3356366, 34.0495963],
-      zoom:10
+      // center: [-118.3356366, 34.0495963],
+      center: centerPoint,
+      zoom: 15
     });
 
     let scaledWidth = (width) => {return {
@@ -40,103 +167,172 @@ class CurbMap extends Component {
     }};
 
     this.map.on('load', () => {
-
-      // let geojson = 'https://pg7x2ae618.execute-api.us-west-2.amazonaws.com/dev/parking/rules?start='+this.state.TimeValue+'&day='+this.state.DayValue
-      // let geojson = `/la/index.json`;
-
-      this.map.addSource('Curbs', {
+      this.map.addSource('Parking Curbs', {
         type: 'geojson',
-        data: this.props.data.dataJson
+        data: parkingFc
       });
 
       this.map.addLayer({
           "id": "Parking Class Right",
           "type": "line",
-          "source": "Curbs",
+          "source": "Parking Curbs",
           "layout":{
             "visibility":'none'
           },
           "paint": {
-            "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
-                     'Passenger Vehicle', '#4286f4',
-                     'Taxi', 'red',
-                     'Loading','yellow',
-                     'Calgary Transit Access','orange',
-                     'yellow'] ,
+            // "line-color": 'red',
+            "line-color": ['get', 'color'],
+            // "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
+            //          'Passenger Vehicle', '#4286f4',
+            //          'Taxi', 'red',
+            //          'Loading','yellow',
+            //          'Calgary Transit Access','orange',
+            //          'yellow'] ,
             "line-width": scaledWidth(12),
             "line-offset": scaledWidth(15),
             "line-opacity": 0.7
           },
-          filter:["all",["match",['get',"side"],"right",true,false],["match",['get','activity',['get','what',['get','restrictions']]],"park", true,false]]
+          filter:[
+            "all",
+              ["match",['get', 'sideOfStreet', ['get',"location"]],"right",true,false],
+              // ["match",['get','activity',['get','rule',['get','regulations']]],"parking", true,false]
+          ]
         });
 
       this.map.addLayer({
         "id": "Parking Class Left",
         "type": "line",
-        "source": "Curbs",
+        "source": "Parking Curbs",
         "layout":{
           "visibility":"none"
         },
         "paint": {
-          "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
-                   'Passenger Vehicle', '#4286f4',
-                   'Taxi', 'red',
-                   'Loading','green',
-                   'Calgary Transit Access','orange',
-                   'yellow'],
+          // "line-color": 'blue',
+          "line-color": ['get', 'color'],
+          // "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
+          //          'Passenger Vehicle', '#4286f4',
+          //          'Taxi', 'red',
+          //          'Loading','green',
+          //          'Calgary Transit Access','orange',
+          //          'yellow'],
           "line-width": scaledWidth(12),
           "line-offset": scaledWidth(-15),
           "line-opacity": 0.7
         },
-        filter:["all",["match",['get',"side"],"left",true,false],["match",['get','activity',['get','what',['get','restrictions']]],"park", true,false]]
+        filter:[
+          "all",
+            ["match",['get', 'sideOfStreet', ['get',"location"]],"left",true,false],
+            // ["match",['get','activity',['get','rule',['get','regulations']]],"parking", true,false]
+        ]
+      });
+
+      this.map.addSource('Loading Curbs', {
+        type: 'geojson',
+        data: loadingFc
       });
 
       this.map.addLayer({
-          "id": "Parking Rate Right",
+          "id": "Loading Class Right",
           "type": "line",
-          "source": "Curbs",
+          "source": "Loading Curbs",
           "layout":{
-            "visibility":"none"
+            "visibility":'none'
           },
           "paint": {
-            "line-color": ["interpolate",
-                ["linear"],
-                ['*',['/',['get', 'rate',['get','payment',['get','restrictions']]] , ['number', ['get', 'interval',['get','payment',['get','restrictions']]], 1]],60],
-                0,'#6105ff',
-                3,'#ff780a',
-                4.5,'#ffee00',
-            ],
+            // "line-color": 'red',
+            "line-color": ['get', 'color'],
+            // "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
+            //          'Passenger Vehicle', '#4286f4',
+            //          'Taxi', 'red',
+            //          'Loading','yellow',
+            //          'Calgary Transit Access','orange',
+            //          'yellow'] ,
             "line-width": scaledWidth(12),
             "line-offset": scaledWidth(15),
             "line-opacity": 0.7
           },
-          filter:["all",["match", ['get',"side"],"right",true,false],["match",['get', 'activity',['get','what',['get','restrictions']]],"park",true,false],["match",['get','class',['get','who',['get','restrictions']]],"Passenger Vehicle", true,false]]
+          filter:[
+            "all",
+              ["match",['get', 'sideOfStreet', ['get',"location"]],"right",true,false],
+              // ["match",['get','activity',['get','rule',['get','regulations']]],"parking", true,false]
+          ]
         });
 
-        this.map.addLayer({
-            "id": "Parking Rate Left",
-            "type": "line",
-            "source": "Curbs",
-            "layout":{
-              "visibility":"none"
-            },
-            "paint": {
-              "line-color": ["interpolate",
-                  ["linear"],
-                  ['*',['/',['get', 'rate',['get','payment',['get','restrictions']]] , ['number', ['get', 'interval',['get','payment',['get','restrictions']]], 1]],60],
-                  0,'#6105ff',
-                  3,'#ff780a',
-                  4.5,'#ffee00',
-              ],
-              "line-width": scaledWidth(12),
-              "line-offset": scaledWidth(-15),
-              "line-opacity": 0.7
-            },
-            filter:["all",["match", ['get',"side"],"left",true,false],["match",['get', 'activity',['get','what',['get','restrictions']]],"park", true,false],["match",['get','class',['get','who',['get','restrictions']]],"Passenger Vehicle", true,false]]
-          });
+      this.map.addLayer({
+        "id": "Loading Class Left",
+        "type": "line",
+        "source": "Loading Curbs",
+        "layout":{
+          "visibility":"none"
+        },
+        "paint": {
+          // "line-color": 'blue',
+          "line-color": ['get', 'color'],
+          // "line-color": ['match', ['get', 'class',['get','who',['get','restrictions']]],
+          //          'Passenger Vehicle', '#4286f4',
+          //          'Taxi', 'red',
+          //          'Loading','green',
+          //          'Calgary Transit Access','orange',
+          //          'yellow'],
+          "line-width": scaledWidth(12),
+          "line-offset": scaledWidth(-15),
+          "line-opacity": 0.7
+        },
+        filter:[
+          "all",
+            ["match",['get', 'sideOfStreet', ['get',"location"]],"left",true,false],
+            // ["match",['get','activity',['get','rule',['get','regulations']]],"parking", true,false]
+        ]
+      });
+
+      // this.map.addLayer({
+      //     "id": "Parking Rate Right",
+      //     "type": "line",
+      //     "source": "Curbs",
+      //     "layout":{
+      //       "visibility":"none"
+      //     },
+      //     "paint": {
+      //       "line-color": ["interpolate",
+      //           ["linear"],
+      //           ['*',['/',['get', 'rate',['get','payment',['get','restrictions']]] , ['number', ['get', 'interval',['get','payment',['get','restrictions']]], 1]],60],
+      //           0,'#6105ff',
+      //           3,'#ff780a',
+      //           4.5,'#ffee00',
+      //       ],
+      //       "line-width": scaledWidth(12),
+      //       "line-offset": scaledWidth(15),
+      //       "line-opacity": 0.7
+      //     },
+      //     filter:["all",["match", ['get',"side"],"right",true,false],["match",['get', 'activity',['get','what',['get','restrictions']]],"park",true,false],["match",['get','class',['get','who',['get','restrictions']]],"Passenger Vehicle", true,false]]
+      //   });
+
+      //   this.map.addLayer({
+      //       "id": "Parking Rate Left",
+      //       "type": "line",
+      //       "source": "Curbs",
+      //       "layout":{
+      //         "visibility":"none"
+      //       },
+      //       "paint": {
+      //         "line-color": ["interpolate",
+      //             ["linear"],
+      //             ['*',['/',['get', 'rate',['get','payment',['get','restrictions']]] , ['number', ['get', 'interval',['get','payment',['get','restrictions']]], 1]],60],
+      //             0,'#6105ff',
+      //             3,'#ff780a',
+      //             4.5,'#ffee00',
+      //         ],
+      //         "line-width": scaledWidth(12),
+      //         "line-offset": scaledWidth(-15),
+      //         "line-opacity": 0.7
+      //       },
+      //       filter:["all",["match", ['get',"side"],"left",true,false],["match",['get', 'activity',['get','what',['get','restrictions']]],"park", true,false],["match",['get','class',['get','who',['get','restrictions']]],"Passenger Vehicle", true,false]]
+      //     });
 
         this.map.setLayoutProperty(this.state.SelectedView+" Right", 'visibility', 'visible');
         this.map.setLayoutProperty(this.state.SelectedView+" Left", 'visibility', 'visible');
+        // this.map.setLayoutProperty("Parking Class Right", 'visibility', 'visible');
+        // this.map.setLayoutProperty("Parking Class Left", 'visibility', 'visible');
     });
   }
 
@@ -191,8 +387,7 @@ class CurbMap extends Component {
 
 export const query = graphql`
   query MyQuery {
-    dataJson(type: {}, id: {}) {
-      type
+    dataJson {
       features {
         type
         geometry {
