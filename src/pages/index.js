@@ -195,6 +195,42 @@ export const query = graphql`
       type
       features {
         type
+        geometry {
+          coordinates
+          type
+        }
+        properties {
+          location {
+            sideOfStreet
+            shstRefId
+            shstLocationSt
+            shstLocationEnd
+            marker
+            derivedFrom
+            objectId
+            streetName
+          }
+          regulations {
+            priority
+            userClass {
+              classes
+            }
+            timeSpans {
+              daysOfWeek {
+                days
+              }
+              timesOfDay {
+                from
+                until
+              }
+            }
+            rule {
+              activity
+              payment
+              reason
+            }
+          }
+        }
       }
     }
   }
