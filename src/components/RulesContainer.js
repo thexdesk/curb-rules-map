@@ -54,7 +54,7 @@ function SelectDay(props){
 }
 
 function SelectToggle(props){
-  let options = ["Parking Class", "Parking Rate"]
+  let options = ["Parking Class", "Loading Class"]
 
   const renderOptions = (option) => {
       return (
@@ -100,10 +100,11 @@ function ParkingRateView(){
 function ClassView(){
   return (
     <div>
-      <span className="txt-m mt12 block"><span className='inline-block w12 h12 round-full bg-blue-light'></span>  Passenger Vehicle</span>
+      {/* <span className="txt-m mt12 block"><span className='inline-block w12 h12 round-full bg-blue-light'></span>  Passenger Vehicle</span>
       <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-green'></span>  Loading Zone</span>
-      <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-red'></span>  Taxi Zone</span>
-      <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-yellow'></span>  Calgary Transit Access</span>
+      <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-red'></span>  Taxi Zone</span> */}
+      <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-yellow'></span>  Taxi</span>
+      <span className="txt-m block"><span className='inline-block w12 h12 round-full bg-white'></span>  Any</span>
     </div>
   )
 }
@@ -121,7 +122,7 @@ function RulesContainer(props) {
     <div className={rulesStyles.container}>
       <div className="prose">
         <h4>On-Street Parking Rules Map</h4>
-        <p className='txt-xs'>Click on the filters below to see parking class type and rates in Calgary</p>
+        <p className='txt-xs'>Click on the filters below to see parking class type and rates</p>
         <SelectToggle checkedValue={props.view} handleViewChange={props.onViewChange}/>
         <SelectDay dayValue={props.day} handleDayChange={props.onDayChange}/>
         <SelectTime timeValue={props.time} handleTimeChange={props.onTimeChange}/>
