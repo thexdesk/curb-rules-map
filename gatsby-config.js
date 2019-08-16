@@ -1,9 +1,9 @@
 module.exports = {
   pathPrefix: "/curb-rules-map",
   siteMetadata: {
-    title: `Calgary Curb Rules Map`,
-    description: `Calgary Curb Rules Map`,
-    author: `@gatsbyjs`,
+    title: `Curb Rules Map`,
+    description: `Curb Rules Map`,
+    author: `SharedStreets`,
   },
   plugins: [
     `gatsby-plugin-react-helmet`,
