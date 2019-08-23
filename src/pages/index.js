@@ -13,7 +13,7 @@ import RulesContainer from "../components/RulesContainer"
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZGlxbSIsImEiOiJjamJpMXcxa3AyMG9zMzNyNmdxNDlneGRvIn0.wjlI8r1S_-xxtq2d-W5qPA';
 const COLOR_MAP = {
-  'any': 'white',
+  'any': 'purple',
   'bike': 'green',
   'car share': 'blue',
   'carpool': 'yellow',
@@ -60,12 +60,12 @@ class CurbMap extends Component {
       feature.properties.regulations.forEach((reg) => {
         if (reg.rule && reg.rule.activity === "parking") {
           // parking
-          if (reg.userClass && reg.userClass.classes) {
-            reg.userClass.classes.forEach((currClass) => {
+          if (reg.userClasses && reg.userClasses.length > 0) {
+            reg.userClasses.forEach((currClass) => {
               const outputFeature = Object.assign({}, feature);
               outputFeature.properties.parking = true;
-              outputFeature.properties.class = currClass;
-              outputFeature.properties.color = COLOR_MAP[currClass];
+              outputFeature.properties.class = currClass.class;
+              outputFeature.properties.color = COLOR_MAP[currClass.class];
               // console.log("parking=>class", currClass);
               parkingFc.features.push(outputFeature);
             });
@@ -398,17 +398,13 @@ export const query = graphql`
           location {
             sideOfStreet
             shstRefId
-            shstLocationSt
+            shstLocationStart
             shstLocationEnd
-            marker
-            derivedFrom
-            objectId
-            streetName
           }
           regulations {
             priority
-            userClass {
-              classes
+            userClasses {
+              class
             }
             timeSpans {
               daysOfWeek {
@@ -416,12 +412,11 @@ export const query = graphql`
               }
               timesOfDay {
                 from
-                until
+                to
               }
             }
             rule {
               activity
-              payment
               reason
             }
           }
