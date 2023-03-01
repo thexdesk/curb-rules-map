@@ -15,7 +15,7 @@
     "gatsby-transformer-json": "^2.2.2",
     "gatsby-transformer-sharp": "^2.2.0",
     "lodash": "^4.17.15",
-    "mapbox-gl": "^1.0.0",
+    "mapbox-gl": "^1.13.3",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
